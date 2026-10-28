@@ -32,7 +32,6 @@ YouTube's public pages and internal endpoints, so there is no API key to registe
 - [Keyboard shortcuts](#keyboard-shortcuts)
 - [Where your data lives](#where-your-data-lives)
 - [Building from source](#building-from-source)
-- [Translations](#translations)
 - [Troubleshooting](#troubleshooting)
 - [How it works](#how-it-works)
 - [Contributing](#contributing) · [Releasing](#releasing) · [License](#license)
@@ -229,35 +228,6 @@ above any list switch between grid, compact grid and list.
 Ctrl/Cmd+K selects the current query without submitting it. Music keeps its own search; pages
 without search return to Home, with playback continuing in PiP. The shortcut leaves dialogs,
 IME composition, and other focused text fields alone. Escape dismisses the active overlay first.
-
-## Translations
-
-The UI language is selected in **Settings → Appearance → Interface language**. **Use system
-language** detects the operating system locale and falls back to English when TubeGlass has no
-matching catalog. This setting only changes TubeGlass controls; it does not affect caption language
-or caption translation.
-
-Catalogs live in `locales/<language-code>.json`. The build discovers every JSON catalog in that
-directory, so adding a language does not require Rust changes. Start a partial catalog with:
-
-```sh
-python3 scripts/new-locale.py fr Français
-```
-
-The command creates all current English keys with blank values. Translate any subset and submit it;
-blank or missing values fall back to English. Keep keys unchanged and preserve every `{placeholder}`
-in translated values. Use a lowercase base language code such as `fr`, not a region-specific code.
-
-Check progress and validate the locale files with:
-
-```sh
-python3 scripts/new-locale.py --coverage
-cargo test
-```
-
-The coverage report counts nonempty translated values. Builds audit UI source strings against the
-English catalog; tests reject unknown locale keys and invalid placeholders. Keep translator notes in
-the pull request, not in catalog values.
 
 ## Where your data lives
 

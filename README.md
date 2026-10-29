@@ -219,8 +219,11 @@ above any list switch between grid, compact grid and list.
 | `M` | Mute | `C` | Comments (transcript for podcasts) |
 | `[` / `]` | Slower / faster | `Y` | Lyrics (music) |
 | `N` / `P` | Next / previous in queue | `F` | Fullscreen |
-| `Esc` | Back (keeps playing in PiP) | `Ctrl+O` | Open a file |
-| `Ctrl+B` | Collapse the sidebar | `?` | Show this list |
+| `0–9` | Seek to 0–90% | `Shift+←` / `Shift+→` | Previous / next chapter |
+| `R` | Repeat: Off / One / All | `S` | Shuffle on / off |
+| `Q` | Queue on / off | `Esc` | Close help / exit fullscreen / back |
+| `Ctrl/Cmd+O` | Open a file | | |
+| `Ctrl/Cmd+B` | Collapse the sidebar | `?` | Show shortcut help |
 
 ## Where your data lives
 

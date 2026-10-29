@@ -7,8 +7,7 @@
 
 - Repository: `milan483/TubeGlass`
 - Application-code baseline inspected: `main` at `f81212aa41211ce4018217d392265091ad9c652f`
-- Task branch at handoff preparation: `feat/playback-shortcuts` at `bca93ebee327bf3bd0702c186fe03e9feb7d7450`
-- The task branch changes the handoff documents; the application behavior described below was inspected against the baseline above.
+- Application code was also checked on the task branch's original head, `bca93ebee327bf3bd0702c186fe03e9feb7d7450`; the application paths matched the baseline. Subsequent task-branch commits changed only handoff documents.
 - If the local checkout has diverged, verify only the referenced source paths and their direct dependencies. Expand exploration only if those findings are stale, missing, or contradicted.
 
 ## Objective

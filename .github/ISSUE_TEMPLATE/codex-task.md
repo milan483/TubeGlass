@@ -1,17 +1,25 @@
 ---
 name: Codex implementation task
-about: A scoped task planned through ChatGPT and implemented with Codex
+about: A scoped task researched and planned through ChatGPT, then implemented with Codex
 title: "[Codex] "
 ---
 
 ## Objective
 <!-- State the outcome in one or two sentences. -->
 
-## Context and current behavior
-<!-- Relevant code paths, existing behavior, prior decisions, and links. -->
+## Source snapshot
+- Repository and target branch:
+- Base commit SHA:
+- Task/PR link, if applicable:
+
+## Context and codebase findings
+<!-- Summarize current behavior and cite exact file paths, functions/types, relevant lines, and source links. Include only findings Codex needs to implement the task. -->
+
+## Research and design decisions
+<!-- Record relevant external sources, verified constraints, the chosen approach, and important rejected alternatives. Distinguish verified facts from assumptions. If no external research or design decision is needed, say so. Do not paste a search transcript. -->
 
 ## Requirements
-<!-- List the concrete changes needed. -->
+<!-- List concrete behavior changes and important edge cases. -->
 
 ## Acceptance criteria
 - [ ] 
@@ -20,7 +28,7 @@ title: "[Codex] "
 <!-- State what must not change. -->
 
 ## Validation
-<!-- Relevant test commands, automated tests, and manual checks. -->
+<!-- List focused tests and required commands. -->
 
-## Constraints and references
-<!-- Optional: design constraints, dependencies, examples, or external references. -->
+## Unresolved questions and assumptions
+<!-- Resolve material questions before handoff where possible. Record only remaining uncertainties that could affect implementation. -->

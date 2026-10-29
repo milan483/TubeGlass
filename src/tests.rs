@@ -148,3 +148,114 @@ mod playback_shortcuts {
         }
     }
 }
+
+mod global_shortcuts {
+    use crate::ui::keys::{
+        EscapeContext, SEARCH_SHORTCUT, escape_context, search_destination, search_key,
+    };
+    use crate::*;
+
+    #[test]
+    fn search_requires_only_platform_command() {
+        use egui::{Key, Modifiers as M};
+        for platform in [M::CTRL | M::COMMAND, M::MAC_CMD | M::COMMAND] {
+            assert!(search_key(Key::K, platform));
+            assert!(!search_key(Key::K, platform | M::SHIFT));
+            assert!(!search_key(Key::K, platform | M::ALT));
+            assert!(!search_key(Key::O, platform));
+            assert!(!crate::ui::keys::player_key_allowed(Key::K, platform));
+        }
+        assert!(!search_key(Key::K, M::NONE));
+        assert!(!search_key(Key::K, M::CTRL | M::MAC_CMD | M::COMMAND));
+        assert!(crate::ui::keys::player_key_allowed(Key::K, M::NONE));
+    }
+
+    #[test]
+    fn search_routing_keeps_grid_and_music_context() {
+        for page in [
+            Sel::Home,
+            Sel::Search,
+            Sel::History,
+            Sel::Channel("channel".into()),
+            Sel::Music,
+            Sel::MusicAlbum("album".into()),
+            Sel::MusicArtist("artist".into()),
+        ] {
+            assert!(search_destination(&page, false) == page);
+        }
+        for page in [
+            Sel::Settings,
+            Sel::Downloads,
+            Sel::Stats,
+            Sel::Clips,
+            Sel::Podcasts,
+            Sel::Podcast("feed".into()),
+        ] {
+            assert!(search_destination(&page, false) == Sel::Home);
+        }
+        assert!(search_destination(&Sel::Music, true) == Sel::Home);
+    }
+
+    #[test]
+    fn escape_chooses_one_topmost_context() {
+        use EscapeContext::*;
+        let contexts = [
+            Popup,
+            Help,
+            Group,
+            Import,
+            List,
+            Notes,
+            Suggestions,
+            Editing,
+            Fullscreen,
+            Player,
+            History,
+        ];
+        assert_eq!(escape_context(&[false; 11]), None);
+        for (index, expected) in contexts.into_iter().enumerate() {
+            let mut active = [true; 11];
+            active[..index].fill(false);
+            assert_eq!(escape_context(&active), Some(expected));
+        }
+    }
+
+    #[test]
+    fn consumed_escape_cannot_reach_another_handler() {
+        let ctx = egui::Context::default();
+        let input = egui::RawInput {
+            events: vec![egui::Event::Key {
+                key: egui::Key::Escape,
+                physical_key: None,
+                pressed: true,
+                repeat: false,
+                modifiers: egui::Modifiers::NONE,
+            }],
+            ..Default::default()
+        };
+        let _ = ctx.run_ui(input, |ui| {
+            let ctx = ui.ctx();
+            assert!(ctx.input(|i| i.key_pressed(egui::Key::Escape)));
+            crate::ui::keys::consume_escape(ctx);
+            assert!(!ctx.input(|i| i.key_pressed(egui::Key::Escape)));
+        });
+    }
+
+    #[test]
+    fn shortcut_reference_matches_readme() {
+        let readme = include_str!("../README.md");
+        assert!(readme.contains(SEARCH_SHORTCUT.0));
+        assert!(readme.contains(SEARCH_SHORTCUT.1));
+    }
+}
+
+#[test]
+fn search_does_not_steal_other_editors_or_modal_input() {
+    use crate::ui::keys::search_allowed;
+    assert!(search_allowed(false, false, false, false, false));
+    assert!(search_allowed(false, false, false, true, true));
+    assert!(!search_allowed(false, false, false, true, false));
+    assert!(!search_allowed(true, false, false, false, false));
+    assert!(!search_allowed(false, true, false, false, false));
+    assert!(!search_allowed(false, false, true, true, true));
+}

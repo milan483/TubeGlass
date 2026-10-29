@@ -35,6 +35,14 @@ pub(crate) struct FieldOut {
     pub(crate) cleared: bool,
 }
 
+/// Focus a search field and select its full query.
+pub(crate) fn focus_search_field(response: &egui::Response, text: &str) {
+    response.request_focus();
+    let mut state = egui::TextEdit::load_state(&response.ctx, response.id).unwrap_or_default();
+    state.cursor.set_char_range(Some(egui::text::CCursorRange::select_all_str(text)));
+    state.store(&response.ctx, response.id);
+}
+
 /// The one text-input design used across the app: a capsule with a leading icon, the
 /// text vertically centred, a clear button, an accent focus ring and an optional action
 /// button on the right.
@@ -124,6 +132,46 @@ pub(crate) fn text_field(
         }
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn focus_search_field_selects_unicode_query_without_submitting() {
+        let ctx = egui::Context::default();
+        let mut text = "東京 café 🐈".to_owned();
+        let original_text = text.clone();
+        let mut field_result = None;
+
+        let _ = ctx.run_ui(Default::default(), |ui| {
+            let field = text_field(
+                ui,
+                &mut text,
+                "Search",
+                420.0,
+                46.0,
+                "search",
+                Some("Search"),
+                false,
+            );
+            focus_search_field(&field.resp, &text);
+            field_result = Some((field.resp.id, field.submit, field.action));
+        });
+
+        let (id, submit, action) = field_result.expect("search field was rendered");
+        let selected = egui::TextEdit::load_state(&ctx, id)
+            .and_then(|state| state.cursor.char_range())
+            .expect("selection was stored")
+            .as_sorted_char_range();
+        assert_eq!(usize::from(selected.start), 0);
+        assert_eq!(usize::from(selected.end), text.chars().count());
+        assert_eq!(text, original_text);
+        assert!(!submit);
+        assert!(!action);
+        assert_eq!(ctx.memory(|memory| memory.focused()), Some(id));
+    }
 }
 
 /// Draws `icon` followed by `label` (and an optional chevron), centred on `center`.

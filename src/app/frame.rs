@@ -37,7 +37,9 @@ impl App {
             self.storage_confirm = None;
         }
         self.pump();
+        self.global_keys(ctx);
         self.keys(ctx);
+        self.search_field = None;
 
         if self.seen_dirty {
             self.seen_dirty = false;
@@ -62,13 +64,7 @@ impl App {
                 (i.modifiers.alt && i.key_pressed(egui::Key::ArrowLeft))
                     || i.pointer.button_pressed(egui::PointerButton::Extra1)
             });
-            let esc = ctx.input(|i| i.key_pressed(egui::Key::Escape))
-                && !ctx.egui_wants_keyboard_input()
-                && self.new_list.is_none()
-                && self.import_list.is_none()
-                && !self.show_help
-                && (self.watching.is_none() || self.pip);
-            if (back_pressed || esc) && self.can_go_back() {
+            if back_pressed && self.can_go_back() {
                 self.go_back();
             }
         }
@@ -103,6 +99,8 @@ impl App {
         }
 
         if self.mini {
+            self.sugg_rect = None;
+            self.music_sugg_rect = None;
             if !watching {
                 self.set_mini(false);
             } else {
@@ -223,6 +221,15 @@ impl App {
                 }
             });
 
+        // Only a field rendered on this page may own next frame's shortcut focus.
+        if self.search_field.is_none() {
+            self.sugg_rect = None;
+            self.music_sugg_rect = None;
+        } else if matches!(self.sel, Sel::Music | Sel::MusicAlbum(_) | Sel::MusicArtist(_)) {
+            self.sugg_rect = None;
+        } else {
+            self.music_sugg_rect = None;
+        }
         self.new_list_dialog(ctx);
         self.import_list_dialog(ctx);
         self.new_group_dialog(ctx);

@@ -1,14 +1,14 @@
 ---
 name: Codex implementation task
-about: A scoped task planned through ChatGPT and executed by Codex
+about: A scoped task planned through ChatGPT and implemented with Codex
 title: "[Codex] "
 ---
 
 ## Objective
-<!-- One sentence describing the outcome. -->
+<!-- State the outcome in one or two sentences. -->
 
 ## Context and current behavior
-<!-- Relevant files, existing behavior, prior decisions, and links. -->
+<!-- Relevant code paths, existing behavior, prior decisions, and links. -->
 
 ## Requirements
 - 
@@ -17,14 +17,10 @@ title: "[Codex] "
 - [ ] 
 
 ## Out of scope
-<!-- Explicitly list what should not change. -->
+<!-- State what must not change. -->
 
 ## Validation
-<!-- Required commands, tests, and manual checks. -->
+<!-- Relevant test commands, automated tests, and manual checks. -->
 
-## Implementation notes
-<!-- Optional design constraints, research findings, or references. -->
-
-## Handoff
-- [ ] Scope is clear enough to implement
-- [ ] Codex reports actual test results and opens a PR for review
+## Constraints and references
+<!-- Optional: design constraints, dependencies, examples, or external references. -->

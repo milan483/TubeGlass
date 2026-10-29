@@ -11,7 +11,7 @@ title: "[Codex] "
 <!-- Relevant code paths, existing behavior, prior decisions, and links. -->
 
 ## Requirements
-- 
+<!-- List the concrete changes needed. -->
 
 ## Acceptance criteria
 - [ ] 

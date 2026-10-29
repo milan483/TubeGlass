@@ -23,4 +23,5 @@
 - Use a dedicated task branch and focused commits. Never push directly to the default branch or force-push.
 - If the task packet points to an existing task PR, continue on that PR's head branch and update the same PR. Do not create a duplicate branch or PR for the same task.
 - After implementation and validation, push the task branch and open or update a pull request unless the user asks otherwise. Never merge a PR, publish a release, or change repository settings without explicit user approval.
-- End with a compact handoff report containing: summary, key files changed, exact validation results, branch and commit SHA, PR URL, and unresolved risks.
+- After pushing an implementation or completing validation of an existing PR, publish one concise top-level PR comment headed `Implementation and validation report` containing the validated head SHA, summary, changed files, command-by-command local test results, available CI status, and remaining limitations. Use the authorized GitHub tooling; avoid duplicate reports for the same validated SHA. If posting fails, report that explicitly instead of implying the handoff succeeded.
+- End with a compact Codex chat response containing the PR URL and any posting failure. GitHub is the report handoff; regular ChatGPT Chat retrieves it on request. Do not assume ChatGPT is automatically notified.

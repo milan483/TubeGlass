@@ -18,6 +18,12 @@ Use ChatGPT for repository reconnaissance, external research, requirement clarif
 
 > Implement the task in [issue/task packet URL]. Follow `AGENTS.md`. The packet contains researched codebase context and design decisions; verify the referenced local code and current source snapshot, then implement without repeating broad repository exploration or external research unless findings are stale, missing, or contradicted. Preserve existing local changes. For a well-specified, low-risk task, proceed directly; stop for approval if a risk gate in `AGENTS.md` applies. Run focused tests and required validation, report exact outcomes, and update the existing task PR. Do not create a duplicate PR or merge. Report the summary, changed files, validation results, branch/commit SHA, PR URL, and unresolved risks.
 
+## Report handoff
+
+- Codex posts its implementation and validation report as a top-level comment on the existing task PR, including the validated head SHA, local tests, available CI results, and unresolved risks. If GitHub posting is unavailable, Codex must state that clearly.
+- The user can ask regular ChatGPT Chat to `review <repo> PR #N`, without copying the Codex report. ChatGPT retrieves the latest PR, report comments, diff, and available CI results through the GitHub connector.
+- This is an on-demand handoff, not an automatic notification. Regular Chat does not wake when Codex comments; do not require ChatGPT Work for this workflow.
+
 ## Review after implementation
 
 - Inspect the actual PR diff against the packet's acceptance criteria and non-goals.

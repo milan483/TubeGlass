@@ -67,3 +67,84 @@ fn list_tools_read_their_inputs() {
     let t = "https://www.youtube.com/playlist?list=PLabcdefghijklmnop&si=x https://youtu.be/x?list=PLzzzzzzzzzzzzzz, PLabcdefghijklmnop, hello";
     assert_eq!(playlist_ids(t), vec!["PLabcdefghijklmnop".to_string(), "PLzzzzzzzzzzzzzz".to_string()]);
 }
+
+mod playback_shortcuts {
+    use crate::Repeat;
+    use crate::ui::keys::{chapter_target, next_repeat, percentage_target, player_key_allowed};
+    use eframe::egui::{Key, Modifiers};
+
+    #[test]
+    fn repeat_cycles_in_order() {
+        let one = next_repeat(Repeat::Off);
+        assert!(one == Repeat::One);
+        let all = next_repeat(one);
+        assert!(all == Repeat::All);
+        assert!(next_repeat(all) == Repeat::Off);
+    }
+
+    #[test]
+    fn percentages_and_invalid_media() {
+        for digit in 0..10 {
+            assert_eq!(
+                percentage_target(200.0, digit, false),
+                Some(f64::from(digit) * 20.0)
+            );
+        }
+        for duration in [0.0, -1.0, f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+            assert_eq!(percentage_target(duration, 5, false), None);
+        }
+        assert_eq!(percentage_target(200.0, 5, true), None);
+        assert_eq!(percentage_target(200.0, 10, false), None);
+        assert!(percentage_target(f64::MAX, 9, false).unwrap().is_finite());
+    }
+
+    #[test]
+    fn chapter_boundaries_and_missing_targets() {
+        let target = |position, next| chapter_target([0.0, 10.0, 20.0].into_iter(), position, next);
+        assert_eq!(target(0.0, true), Some(10.0));
+        assert_eq!(target(10.0, true), Some(20.0));
+        assert_eq!(target(20.0, true), None);
+        assert_eq!(target(13.0, false), Some(0.0));
+        assert_eq!(target(13.001, false), Some(10.0));
+        assert_eq!(target(10.0, false), Some(0.0));
+        assert_eq!(target(3.0, false), None);
+        assert_eq!(target(3.001, false), Some(0.0));
+        assert_eq!(target(-1.0, false), None);
+        assert_eq!(target(f64::NAN, true), None);
+        assert_eq!(chapter_target([].into_iter(), 5.0, false), None);
+        assert_eq!(chapter_target([10.0].into_iter(), 5.0, false), None);
+        assert_eq!(
+            chapter_target([20.0, 0.0, 10.0, 10.0, f64::NAN].into_iter(), 13.0, false),
+            Some(0.0)
+        );
+    }
+
+    #[test]
+    fn modifiers_only_allow_supported_combinations() {
+        for key in [
+            Key::B,
+            Key::R,
+            Key::S,
+            Key::Num5,
+            Key::Escape,
+            Key::ArrowLeft,
+        ] {
+            assert!(player_key_allowed(key, Modifiers::NONE));
+            for modifiers in [
+                Modifiers::CTRL,
+                Modifiers::COMMAND,
+                Modifiers::ALT,
+                Modifiers::MAC_CMD,
+            ] {
+                assert!(!player_key_allowed(key, modifiers));
+                assert!(!player_key_allowed(key, modifiers | Modifiers::SHIFT));
+            }
+        }
+        for key in [Key::ArrowLeft, Key::ArrowRight, Key::Questionmark] {
+            assert!(player_key_allowed(key, Modifiers::SHIFT));
+        }
+        for key in [Key::B, Key::R, Key::S, Key::Num5, Key::Space, Key::Escape] {
+            assert!(!player_key_allowed(key, Modifiers::SHIFT));
+        }
+    }
+}

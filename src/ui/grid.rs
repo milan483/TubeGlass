@@ -95,10 +95,15 @@ impl App {
                 )
             })
             .inner;
+        self.search_field = Some(fld.resp.id);
+        let focus_requested = std::mem::take(&mut self.focus_search);
+        if focus_requested {
+            focus_search_field(&fld.resp, &self.search_input);
+        }
         if go_back {
             self.go_back();
         }
-        focused = fld.resp.has_focus();
+        focused = focus_requested || fld.resp.has_focus();
         if fld.resp.changed() {
             self.last_edit = Instant::now();
         }

@@ -54,6 +54,8 @@ pub(crate) struct Settings {
     pub(crate) accent_custom: [u8; 3],
     /// 0 dark, 1 light, 2 follow the system
     pub(crate) theme: u8,
+    /// UI language preference: system, en, or a language catalog code.
+    pub(crate) language: String,
     pub(crate) font_scale: f32,
     /// 0 compact, 1 comfortable, 2 spacious
     pub(crate) density: u8,
@@ -97,6 +99,7 @@ impl Default for Settings {
             last_update_check: 0,
             accent_custom: [255, 154, 31],
             theme: 0,
+            language: "system".into(),
             font_scale: 1.0,
             density: 1,
             view_mode: 0,

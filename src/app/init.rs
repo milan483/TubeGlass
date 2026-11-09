@@ -198,6 +198,7 @@ impl App {
         };
         // Show what was fetched last time right away; only channels we have never seen
         // are fetched. Everything else updates when the user presses Refresh.
+        i18n::set_language(&app.settings.language);
         apply_settings(&app.settings);
         let saved_page = app.win.page.clone();
         if !saved_page.is_empty() {

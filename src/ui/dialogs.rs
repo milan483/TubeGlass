@@ -7,23 +7,23 @@ impl App {
     pub(crate) fn new_group_dialog(&mut self, ctx: &egui::Context) {
         let Some((name, _)) = self.new_group.as_mut() else { return };
         let (mut create, mut cancel) = (false, false);
-        egui::Window::new("New group")
+        egui::Window::new(tr("New group"))
             .collapsible(false)
             .resizable(false)
             .anchor(Align2::CENTER_CENTER, vec2(0.0, 0.0))
             .show(ctx, |ui| {
                 ui.set_width(300.0);
-                let f = text_field(ui, name, "Group name, e.g. Music", 300.0, 42.0, "folder", None, false);
+                let f = text_field(ui, name, &tr("Group name, e.g. Music"), 300.0, 42.0, "folder", None, false);
                 f.resp.request_focus();
                 if f.submit {
                     create = true;
                 }
                 ui.add_space(6.0);
                 ui.horizontal(|ui| {
-                    if ui.add(egui::Button::new(egui::RichText::new("Create").strong()).fill(accent())).clicked() {
+                    if ui.add(egui::Button::new(egui::RichText::new(tr("Create")).strong()).fill(accent())).clicked() {
                         create = true;
                     }
-                    if ui.button("Cancel").clicked() {
+                    if ui.button(tr("Cancel")).clicked() {
                         cancel = true;
                     }
                 });
@@ -53,26 +53,26 @@ impl App {
         let Some((name, pending)) = self.new_list.as_mut() else { return };
         let mut create = false;
         let mut cancel = false;
-        egui::Window::new("New playlist")
+        egui::Window::new(tr("New playlist"))
             .collapsible(false)
             .resizable(false)
             .anchor(Align2::CENTER_CENTER, vec2(0.0, 0.0))
             .show(ctx, |ui| {
                 ui.set_width(300.0);
-                let f = text_field(ui, name, "Playlist name", 300.0, 42.0, "list", None, false);
+                let f = text_field(ui, name, &tr("Playlist name"), 300.0, 42.0, "list", None, false);
                 f.resp.request_focus();
                 if f.submit {
                     create = true;
                 }
                 if let Some(v) = pending.as_ref() {
-                    ui.label(egui::RichText::new(format!("“{}” will be added to it.", v.title)).size(12.0).color(muted()));
+                    ui.label(egui::RichText::new(trf("“{title}” will be added to it.", &[("title", &v.title)])).size(12.0).color(muted()));
                 }
                 ui.add_space(6.0);
                 ui.horizontal(|ui| {
-                    if ui.add(egui::Button::new(egui::RichText::new("Create").strong()).fill(accent())).clicked() {
+                    if ui.add(egui::Button::new(egui::RichText::new(tr("Create")).strong()).fill(accent())).clicked() {
                         create = true;
                     }
-                    if ui.button("Cancel").clicked() {
+                    if ui.button(tr("Cancel")).clicked() {
                         cancel = true;
                     }
                 });
@@ -126,7 +126,7 @@ impl App {
         }
         if self.show_help {
             let mut open = true;
-            egui::Window::new("Keyboard shortcuts")
+            egui::Window::new(tr("Keyboard shortcuts"))
                 .open(&mut open)
                 .collapsible(false)
                 .resizable(false)
@@ -162,7 +162,7 @@ impl App {
                     for (k, d) in rows {
                         ui.horizontal(|ui| {
                             ui.add_sized([130.0, 24.0], egui::Label::new(egui::RichText::new(k).strong().color(accent())));
-                            ui.label(d);
+                            ui.label(tr(d));
                         });
                     }
                 });
@@ -181,13 +181,13 @@ impl App {
         let mut cancel = false;
         let ids = playlist_ids(text);
         let busy = *loading > 0;
-        egui::Window::new("Import playlists from YouTube")
+        egui::Window::new(tr("Import playlists from YouTube"))
             .collapsible(false)
             .resizable(false)
             .anchor(Align2::CENTER_CENTER, vec2(0.0, 0.0))
             .show(ctx, |ui| {
                 ui.set_width(420.0);
-                ui.label(egui::RichText::new("Paste one or more playlist links (or ids). Each becomes a playlist you can edit, download and keep offline.").size(12.5).color(muted()));
+                ui.label(egui::RichText::new(tr("Paste one or more playlist links (or ids). Each becomes a playlist you can edit, download and keep offline.")).size(12.5).color(muted()));
                 ui.add_space(6.0);
                 let f = text_field(ui, text, "https://www.youtube.com/playlist?list=…", 420.0, 42.0, "list", None, false);
                 if !busy {
@@ -198,22 +198,23 @@ impl App {
                 }
                 ui.add_space(4.0);
                 let note = if busy {
-                    format!("Importing… {loading} left")
+                    trf("Importing… {count} left", &[("count", &loading.to_string())])
                 } else if text.trim().is_empty() {
                     String::new()
                 } else if ids.is_empty() {
-                    "No playlist link found yet. Private playlists cannot be imported.".to_string()
+                    tr("No playlist link found yet. Private playlists cannot be imported.")
                 } else {
-                    format!("{} playlist{} found", ids.len(), if ids.len() == 1 { "" } else { "s" })
+                    let count = ids.len().to_string();
+                    if ids.len() == 1 { trf("{count} playlist found", &[("count", &count)]) } else { trf("{count} playlists found", &[("count", &count)]) }
                 };
                 ui.label(egui::RichText::new(note).size(12.0).color(muted()));
                 ui.add_space(6.0);
                 ui.horizontal(|ui| {
-                    let b = egui::Button::new(egui::RichText::new("Import").strong()).fill(accent());
+                    let b = egui::Button::new(egui::RichText::new(tr("Import")).strong()).fill(accent());
                     if ui.add_enabled(!ids.is_empty() && !busy, b).clicked() {
                         go = true;
                     }
-                    if ui.button(if busy { "Close" } else { "Cancel" }).clicked() {
+                    if ui.button(tr(if busy { "Close" } else { "Cancel" })).clicked() {
                         cancel = true;
                     }
                 });

@@ -166,6 +166,11 @@ impl App {
     fn music_search_bar(&mut self, ui: &mut egui::Ui) {
         let w = ui.available_width();
         let f = text_field(ui, &mut self.music_q, "Search songs, albums, artists", w, 46.0, "search", Some("Search"), false);
+        self.search_field = Some(f.resp.id);
+        let focus_requested = std::mem::take(&mut self.focus_search);
+        if focus_requested {
+            focus_search_field(&f.resp, &self.music_q);
+        }
         let mut go = f.submit || f.action;
         if f.cleared {
             self.music_active = None;
@@ -173,7 +178,7 @@ impl App {
         if f.resp.changed() {
             self.music_edit = Instant::now();
         }
-        let focused = f.resp.has_focus();
+        let focused = focus_requested || f.resp.has_focus();
         let q = self.music_q.trim().to_string();
         if focused && !q.is_empty() && q != self.music_sugg_req {
             if self.music_edit.elapsed() > Duration::from_millis(180) {

@@ -221,9 +221,13 @@ above any list switch between grid, compact grid and list.
 | `N` / `P` | Next / previous in queue | `F` | Fullscreen |
 | `0–9` | Seek to 0–90% | `Shift+←` / `Shift+→` | Previous / next chapter |
 | `R` | Repeat: Off / One / All | `S` | Shuffle on / off |
-| `Q` | Queue on / off | `Esc` | Close help / exit fullscreen / back |
-| `Ctrl/Cmd+O` | Open a file | | |
+| `Q` | Queue on / off | `Esc` | Dismiss overlay / exit fullscreen / back |
+| `Ctrl/Cmd+O` | Open a file | `Ctrl/Cmd+K` | Focus search (select query) |
 | `Ctrl/Cmd+B` | Collapse the sidebar | `?` | Show shortcut help |
+
+Ctrl/Cmd+K selects the current query without submitting it. Music keeps its own search; pages
+without search return to Home, with playback continuing in PiP. The shortcut leaves dialogs,
+IME composition, and other focused text fields alone. Escape dismisses the active overlay first.
 
 ## Where your data lives
 

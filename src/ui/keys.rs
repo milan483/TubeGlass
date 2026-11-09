@@ -63,7 +63,12 @@ pub(crate) fn player_key_allowed(key: egui::Key, modifiers: egui::Modifiers) -> 
 impl App {
     /// Handles the keyboard shortcuts of the player.
     pub(crate) fn keys(&mut self, ctx: &egui::Context) {
-        if ctx.egui_wants_keyboard_input() || self.watching.is_none() {
+        if ctx.egui_wants_keyboard_input()
+            || self.watching.is_none()
+            || self.shortcut_modal_open()
+            || egui::Popup::is_any_open(ctx)
+            || self.ime_composing
+        {
             return;
         }
         use egui::Key::*;
@@ -231,13 +236,6 @@ impl App {
             let on = !self.player.audio_mode;
             self.player.set_audio_mode(on);
         }
-        if pressed(Escape) && !self.pip && !self.show_help {
-            if self.fullscreen {
-                self.toggle_fullscreen();
-            } else {
-                self.back_from_player();
-            }
-        }
         // a key press shows the controls for a moment, like moving the mouse does
         if ctx.input(|i| {
             i.events
@@ -245,6 +243,204 @@ impl App {
                 .any(|e| matches!(e, egui::Event::Key { pressed: true, .. }))
         }) {
             self.last_move = Instant::now();
+        }
+    }
+}
+
+pub(crate) const SEARCH_SHORTCUT: (&str, &str) = ("Ctrl/Cmd+K", "Focus search (select query)");
+
+pub(crate) fn search_key(key: egui::Key, m: egui::Modifiers) -> bool {
+    key == egui::Key::K && m.command && !m.shift && !m.alt && !(m.ctrl && m.mac_cmd)
+}
+
+pub(crate) fn search_allowed(
+    modal: bool,
+    popup: bool,
+    composing: bool,
+    editing: bool,
+    own_search: bool,
+) -> bool {
+    !modal && !popup && !composing && (!editing || own_search)
+}
+
+pub(crate) fn search_destination(sel: &Sel, full_player: bool) -> Sel {
+    if full_player
+        || matches!(
+            sel,
+            Sel::Settings
+                | Sel::Downloads
+                | Sel::Stats
+                | Sel::Clips
+                | Sel::Podcasts
+                | Sel::Podcast(_)
+        )
+    {
+        Sel::Home
+    } else {
+        sel.clone()
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) enum EscapeContext {
+    Popup,
+    Help,
+    Group,
+    Import,
+    List,
+    Notes,
+    Suggestions,
+    Editing,
+    Fullscreen,
+    Player,
+    History,
+}
+
+pub(crate) fn consume_escape(ctx: &egui::Context) {
+    ctx.input_mut(|i| {
+        i.events.retain(|e| {
+            !matches!(
+                e,
+                egui::Event::Key {
+                    key: egui::Key::Escape,
+                    ..
+                }
+            )
+        })
+    });
+}
+
+pub(crate) fn escape_context(active: &[bool; 11]) -> Option<EscapeContext> {
+    use EscapeContext::*;
+    [
+        Popup,
+        Help,
+        Group,
+        Import,
+        List,
+        Notes,
+        Suggestions,
+        Editing,
+        Fullscreen,
+        Player,
+        History,
+    ]
+    .into_iter()
+    .zip(active)
+    .find_map(|(context, active)| active.then_some(context))
+}
+
+impl App {
+    pub(crate) fn shortcut_modal_open(&self) -> bool {
+        self.picking
+            || self.show_help
+            || self.new_group.is_some()
+            || self.import_list.is_some()
+            || self.new_list.is_some()
+            || self.update_notes_open
+    }
+
+    /// Route before widgets and player handlers; consuming Escape prevents same-frame fallthrough.
+    #[allow(deprecated)] // Some backends still emit the legacy IME Disabled event.
+    pub(crate) fn global_keys(&mut self, ctx: &egui::Context) {
+        let ime_event = ctx.input(|i| i.events.iter().any(|e| matches!(e, egui::Event::Ime(_))));
+        ctx.input(|i| {
+            for event in &i.events {
+                if let egui::Event::Ime(event) = event {
+                    match event {
+                        egui::ImeEvent::Preedit { text, .. } => {
+                            self.ime_composing = !text.is_empty()
+                        }
+                        egui::ImeEvent::Commit(_) | egui::ImeEvent::Disabled => {
+                            self.ime_composing = false
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        });
+        if self.picking || self.ime_composing || ime_event {
+            return;
+        }
+        let popup = egui::Popup::is_any_open(ctx);
+        let editing = ctx.egui_wants_keyboard_input();
+        let own_search = ctx
+            .memory(|m| m.focused())
+            .is_some_and(|id| Some(id) == self.search_field);
+        let search = ctx.input(|i| {
+            i.events.iter().any(|e| {
+                matches!(e,
+            egui::Event::Key { key, modifiers, pressed: true, .. } if search_key(*key, *modifiers))
+            })
+        });
+        if search
+            && search_allowed(
+                self.shortcut_modal_open(),
+                popup,
+                self.ime_composing || ime_event,
+                editing,
+                own_search,
+            )
+        {
+            ctx.input_mut(|i| {
+                i.events.retain(|e| {
+                    !matches!(e,
+                egui::Event::Key { key, modifiers, .. } if search_key(*key, *modifiers))
+                })
+            });
+            let full = self.watching.is_some() && !self.pip;
+            let destination = search_destination(&self.sel, full || self.mini);
+            if self.mini {
+                self.set_mini(false);
+            }
+            if full {
+                self.enter_pip();
+            }
+            self.sel = destination;
+            self.focus_search = true;
+            self.release_focus = false;
+        }
+        if !ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+            return;
+        }
+        let context = escape_context(&[
+            popup,
+            self.show_help,
+            self.new_group.is_some(),
+            self.import_list.is_some(),
+            self.new_list.is_some(),
+            self.update_notes_open,
+            self.sugg_rect.is_some() || self.music_sugg_rect.is_some(),
+            editing,
+            self.watching.is_some() && !self.pip && self.fullscreen,
+            self.watching.is_some() && !self.pip,
+            self.can_go_back(),
+        ]);
+        // Leave Escape to a focused text editor when no overlay is present.
+        if context == Some(EscapeContext::Editing) {
+            return;
+        }
+        if context.is_some() {
+            consume_escape(ctx);
+        }
+        match context {
+            Some(EscapeContext::Popup) => egui::Popup::close_all(ctx),
+            Some(EscapeContext::Help) => self.show_help = false,
+            Some(EscapeContext::Group) => self.new_group = None,
+            Some(EscapeContext::Import) => self.import_list = None,
+            Some(EscapeContext::List) => self.new_list = None,
+            Some(EscapeContext::Notes) => self.update_notes_open = false,
+            Some(EscapeContext::Suggestions) => {
+                self.sugg_rect = None;
+                self.music_sugg_rect = None;
+                if let Some(id) = ctx.memory(|m| m.focused()) {
+                    ctx.memory_mut(|m| m.surrender_focus(id));
+                }
+            }
+            Some(EscapeContext::Fullscreen) => self.toggle_fullscreen(),
+            Some(EscapeContext::Player) => self.back_from_player(),
+            Some(EscapeContext::History) => self.go_back(),
+            _ => {}
         }
     }
 }

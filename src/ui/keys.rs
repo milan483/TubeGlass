@@ -132,20 +132,20 @@ impl App {
         if pressed(R) {
             self.settings.repeat = next_repeat(self.settings.repeat);
             self.save_settings();
-            self.toast(match self.settings.repeat {
+            self.toast(tr(match self.settings.repeat {
                 Repeat::Off => "Repeat off",
                 Repeat::One => "Repeat this video",
                 Repeat::All => "Repeat the queue",
-            });
+            }));
         }
         if pressed(S) {
             self.settings.shuffle = !self.settings.shuffle;
             self.save_settings();
-            self.toast(if self.settings.shuffle {
+            self.toast(tr(if self.settings.shuffle {
                 "Shuffle on"
             } else {
                 "Shuffle off"
-            });
+            }));
         }
         if pressed(ArrowUp) {
             self.player.set_volume(self.player.volume + 0.05);

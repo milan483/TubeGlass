@@ -11,11 +11,10 @@ fn catalogs() -> &'static HashMap<String, HashMap<String, String>> {
     CATALOGS.get_or_init(|| {
         CATALOG_SOURCES
             .iter()
-            .map(|(language, json)| {
-                let catalog = serde_json::from_str(json).unwrap_or_else(|error| {
-                    panic!("invalid {language}.json locale catalog: {error}")
-                });
-                ((*language).to_owned(), catalog)
+            .filter_map(|(language, json)| {
+                serde_json::from_str(json)
+                    .ok()
+                    .map(|catalog| ((*language).to_owned(), catalog))
             })
             .collect()
     })
@@ -98,6 +97,16 @@ pub(crate) fn language_options() -> Vec<(String, String)> {
     options
 }
 
+/// Display a saved playlist name in the current UI language.
+pub(crate) fn playlist_label(list: &crate::LocalList) -> String {
+    match (list.id.as_str(), list.name.as_str()) {
+        ("favorites", "Favorites") => tr("Favorites"),
+        ("watchlater", "Watch later") => tr("Watch later"),
+        ("liked", "Liked songs") => tr("Liked songs"),
+        _ => list.name.clone(),
+    }
+}
+
 /// Resolve the raw catalog message before decoding braces or substituting values.
 fn message(key: &str) -> String {
     let language = active_language()
@@ -116,7 +125,11 @@ pub(crate) fn tr(key: &str) -> String {
     crate::locale_format::render(&text, &[]).unwrap_or(text)
 }
 
-fn lookup(catalogs: &HashMap<String, HashMap<String, String>>, language: &str, key: &str) -> String {
+fn lookup(
+    catalogs: &HashMap<String, HashMap<String, String>>,
+    language: &str,
+    key: &str,
+) -> String {
     catalogs
         .get(language)
         .and_then(|catalog| catalog.get(key))
@@ -147,26 +160,50 @@ mod tests {
     #[test]
     fn english_is_complete_and_locales_have_known_keys_and_valid_placeholders() {
         let english = catalogs().get("en").expect("English catalog is required");
-        let total = english.keys().filter(|key| key.as_str() != "__language_name").count();
-        assert!(english.iter().filter(|(key, _)| key.as_str() != "__language_name").all(|(_, value)| !value.trim().is_empty()), "English source values must be complete");
+        let indonesian = catalogs()
+            .get("id")
+            .expect("Indonesian catalog is required");
+        assert_eq!(indonesian.len(), english.len());
+        assert!(english.keys().all(|key| {
+            indonesian
+                .get(key)
+                .is_some_and(|text| !text.trim().is_empty())
+        }));
+        let total = english
+            .keys()
+            .filter(|key| key.as_str() != "__language_name")
+            .count();
+        assert!(
+            english
+                .iter()
+                .filter(|(key, _)| key.as_str() != "__language_name")
+                .all(|(_, value)| !value.trim().is_empty()),
+            "English source values must be complete"
+        );
         for (language, catalog) in catalogs() {
             let mut translated = 0;
             for (key, value) in catalog {
                 if key == "__language_name" {
                     continue;
                 }
-                let source = english.get(key).unwrap_or_else(|| panic!("{language}.json has unknown key {key:?}"));
+                let source = english
+                    .get(key)
+                    .unwrap_or_else(|| panic!("{language}.json has unknown key {key:?}"));
                 if value.trim().is_empty() {
                     continue;
                 }
                 translated += 1;
                 assert_eq!(
                     crate::locale_format::placeholder_names(source).unwrap(),
-                    crate::locale_format::placeholder_names(value).unwrap_or_else(|error| panic!("{language}.json for {key:?}: {error}")),
+                    crate::locale_format::placeholder_names(value)
+                        .unwrap_or_else(|error| panic!("{language}.json for {key:?}: {error}")),
                     "invalid placeholders in {language}.json for {key:?}"
                 );
             }
-            eprintln!("{language}: {translated}/{total} UI strings translated ({:.1}%)", translated as f64 * 100.0 / total as f64);
+            eprintln!(
+                "{language}: {translated}/{total} UI strings translated ({:.1}%)",
+                translated as f64 * 100.0 / total as f64
+            );
         }
     }
 
@@ -180,7 +217,13 @@ mod tests {
         let now = 1_000_000;
         let boundaries = [0, 59, 60, 3599, 3600, 86399, 86400];
         for (seconds, expected) in boundaries.into_iter().zip([
-            "just now", "just now", "1 min ago", "59 min ago", "1 h ago", "23 h ago", "1 d ago",
+            "just now",
+            "just now",
+            "1 min ago",
+            "59 min ago",
+            "1 h ago",
+            "23 h ago",
+            "1 d ago",
         ]) {
             assert_eq!(crate::util::ago_at(now - seconds, now), expected);
         }
@@ -189,7 +232,13 @@ mod tests {
         assert_eq!(tr("Settings"), "Pengaturan");
         assert_eq!(trf("{count} items", &[("count", "2")]), "2 item");
         for (seconds, expected) in boundaries.into_iter().zip([
-            "baru saja", "baru saja", "1 mnt lalu", "59 mnt lalu", "1 jam lalu", "23 jam lalu", "1 hari lalu",
+            "baru saja",
+            "baru saja",
+            "1 mnt lalu",
+            "59 mnt lalu",
+            "1 jam lalu",
+            "23 jam lalu",
+            "1 hari lalu",
         ]) {
             assert_eq!(crate::util::ago_at(now - seconds, now), expected);
         }
@@ -209,14 +258,20 @@ mod tests {
     #[test]
     fn partial_locales_fall_back_for_missing_and_blank_values() {
         let catalogs = HashMap::from([
-            ("en".to_owned(), HashMap::from([
-                ("Settings".to_owned(), "Settings".to_owned()),
-                ("Downloads".to_owned(), "Downloads".to_owned()),
-            ])),
-            ("fr".to_owned(), HashMap::from([
-                ("Settings".to_owned(), "Paramètres".to_owned()),
-                ("Downloads".to_owned(), String::new()),
-            ])),
+            (
+                "en".to_owned(),
+                HashMap::from([
+                    ("Settings".to_owned(), "Settings".to_owned()),
+                    ("Downloads".to_owned(), "Downloads".to_owned()),
+                ]),
+            ),
+            (
+                "fr".to_owned(),
+                HashMap::from([
+                    ("Settings".to_owned(), "Paramètres".to_owned()),
+                    ("Downloads".to_owned(), String::new()),
+                ]),
+            ),
         ]);
         assert_eq!(lookup(&catalogs, "fr", "Settings"), "Paramètres");
         assert_eq!(lookup(&catalogs, "fr", "Downloads"), "Downloads");

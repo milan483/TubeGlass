@@ -549,5 +549,18 @@
   "just now": "baru saja",
   "{count} min ago": "{count} mnt lalu",
   "{count} h ago": "{count} jam lalu",
-  "{count} d ago": "{count} hari lalu"
+  "{count} d ago": "{count} hari lalu",
+  "Favorites": "Favorit",
+  "Seek to 0–90%": "Lompat ke 0–90%",
+  "Previous / next chapter": "Bab sebelumnya / berikutnya",
+  "Repeat: Off / One / All": "Ulangi: Nonaktif / Satu / Semua",
+  "Shuffle on / off": "Aktifkan / nonaktifkan acak",
+  "Queue on / off": "Tampilkan / sembunyikan antrean",
+  "Comments (transcript for podcasts)": "Komentar (transkrip untuk podcast)",
+  "Dismiss overlay / exit fullscreen / back": "Tutup panel / keluar dari layar penuh / kembali",
+  "Show shortcut help": "Tampilkan bantuan pintasan",
+  "Focus search (select query)": "Fokus ke pencarian",
+  "Repeat off": "Pengulangan nonaktif",
+  "Shuffle on": "Acak aktif",
+  "Shuffle off": "Acak nonaktif"
 }

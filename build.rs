@@ -56,7 +56,8 @@ fn validate_catalogs(catalogs: &[std::path::PathBuf]) {
                 path,
                 serde_json::from_str::<std::collections::HashMap<String, String>>(
                     &std::fs::read_to_string(path).expect("read locale catalog"),
-                ).unwrap_or_else(|error| panic!("invalid catalog {}: {error}", path.display())),
+                )
+                .unwrap_or_else(|error| panic!("invalid catalog {}: {error}", path.display())),
             )
         })
         .collect::<Vec<_>>();
@@ -65,10 +66,18 @@ fn validate_catalogs(catalogs: &[std::path::PathBuf]) {
         .find(|(path, _)| path.file_stem().is_some_and(|stem| stem == "en"))
         .map(|(_, source)| source)
         .expect("locales/en.json is required");
-    let english_keys = english.keys().cloned().collect::<std::collections::HashSet<_>>();
+    let english_keys = english
+        .keys()
+        .cloned()
+        .collect::<std::collections::HashSet<_>>();
     for (key, value) in english {
-        if key == "__language_name" { continue; }
-        assert!(!value.trim().is_empty(), "English source value is blank for {key:?}");
+        if key == "__language_name" {
+            continue;
+        }
+        assert!(
+            !value.trim().is_empty(),
+            "English source value is blank for {key:?}"
+        );
         let names = locale_format::placeholder_names(key)
             .unwrap_or_else(|error| panic!("invalid English source key {key:?}: {error}"));
         let translated = locale_format::placeholder_names(value)
@@ -77,16 +86,29 @@ fn validate_catalogs(catalogs: &[std::path::PathBuf]) {
     }
     for (path, catalog) in &locale_sources {
         for (key, value) in catalog {
-            if key == "__language_name" { continue; }
+            if key == "__language_name" {
+                continue;
+            }
             let source = english.get(key).unwrap_or_else(|| {
-                panic!("{} contains unknown translation key {key:?}", path.display())
+                panic!(
+                    "{} contains unknown translation key {key:?}",
+                    path.display()
+                )
             });
             if !value.trim().is_empty() {
                 let expected = locale_format::placeholder_names(source).unwrap();
                 let actual = locale_format::placeholder_names(value).unwrap_or_else(|error| {
-                    panic!("invalid placeholders in {} for {key:?}: {error}", path.display())
+                    panic!(
+                        "invalid placeholders in {} for {key:?}: {error}",
+                        path.display()
+                    )
                 });
-                assert_eq!(expected, actual, "invalid placeholders in {} for {key:?}", path.display());
+                assert_eq!(
+                    expected,
+                    actual,
+                    "invalid placeholders in {} for {key:?}",
+                    path.display()
+                );
             }
         }
     }
@@ -106,9 +128,13 @@ fn validate_catalogs(catalogs: &[std::path::PathBuf]) {
     source_files.sort();
     for source_path in source_files {
         let source = std::fs::read_to_string(&source_path).expect("read UI source file");
+        // Unit test modules at the end of these files contain fixture text, not UI copy.
+        let source = source
+            .split_once("\n#[cfg(test)]\nmod tests {")
+            .map_or(source.as_str(), |(production, _)| production);
         let mut keys = Vec::new();
         for call in ["tr", "trf"] {
-            for args in call_arguments(&source, call) {
+            for args in call_arguments(source, call) {
                 if let Some(key) = args.first().and_then(|arg| string_literal(arg)) {
                     keys.push(key);
                 }
@@ -116,8 +142,12 @@ fn validate_catalogs(catalogs: &[std::path::PathBuf]) {
         }
         // These helpers translate their label/hint arguments internally. Keep their
         // literal call-site keys checked even though the call does not spell `tr(...)`.
-        for (call, indexes) in [("row", &[1usize, 2][..]), ("section", &[1][..]), ("ask", &[2, 3][..])] {
-            for args in call_arguments(&source, call) {
+        for (call, indexes) in [
+            ("row", &[1usize, 2][..]),
+            ("section", &[1][..]),
+            ("ask", &[2, 3][..]),
+        ] {
+            for args in call_arguments(source, call) {
                 for index in indexes {
                     if let Some(key) = args.get(*index).and_then(|arg| string_literal(arg)) {
                         if !key.is_empty() {
@@ -163,7 +193,7 @@ fn validate_catalogs(catalogs: &[std::path::PathBuf]) {
             (".text", &[2]),
         ];
         for (call, indexes) in sinks {
-            for args in call_arguments(&source, call) {
+            for args in call_arguments(source, call) {
                 for index in *indexes {
                     if let Some(value) = args.get(*index).and_then(|arg| string_literal(arg)) {
                         let neutral = value.is_empty()
@@ -186,10 +216,14 @@ fn validate_catalogs(catalogs: &[std::path::PathBuf]) {
         // formatted branches before they reach a widget through a variable. Provider content,
         // operating-system error fragments, and shortcut glyphs are intentionally excluded.
         if source_path == std::path::Path::new("src/util.rs")
-            || (source_path.starts_with("src/ui") && source_path.file_name().is_some_and(|name| name == "i18n.rs")) {
+            || (source_path.starts_with("src/ui")
+                && source_path
+                    .file_name()
+                    .is_some_and(|name| name == "i18n.rs"))
+        {
             continue;
         }
-        for value in string_literals(&source) {
+        for value in string_literals(source) {
             let human_text = value.chars().next().is_some_and(char::is_alphabetic)
                 && value.chars().any(char::is_whitespace);
             if !human_text || is_non_ui_literal(&value) {
@@ -221,7 +255,12 @@ fn string_literals(source: &str) -> Vec<String> {
                 } else if c == '\\' {
                     escaped = true;
                 } else if c == '"' {
-                    values.push(line[start + 1..i].replace("\\\"", "\"").replace("\\n", "\n").replace("\\t", "\t"));
+                    values.push(
+                        line[start + 1..i]
+                            .replace("\\\"", "\"")
+                            .replace("\\n", "\n")
+                            .replace("\\t", "\t"),
+                    );
                     in_string = false;
                 }
             } else if c == '/' && bytes.get(i + 1) == Some(&b'/') {
@@ -246,6 +285,7 @@ fn is_non_ui_literal(value: &str) -> bool {
             | "Space / K"
             | "← →"
             | "J / L"
+            | "Shift+← / Shift+→"
             | "↑ ↓"
             | "[  /  ]"
             | "N / P"
@@ -329,7 +369,12 @@ fn string_literal(expression: &str) -> Option<String> {
     if !expression.starts_with('"') || !expression.ends_with('"') || expression.len() < 2 {
         return None;
     }
-    Some(expression[1..expression.len() - 1].replace("\\\"", "\"").replace("\\n", "\n").replace("\\t", "\t"))
+    Some(
+        expression[1..expression.len() - 1]
+            .replace("\\\"", "\"")
+            .replace("\\n", "\n")
+            .replace("\\t", "\t"),
+    )
 }
 
 #[cfg(windows)]

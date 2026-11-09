@@ -142,18 +142,8 @@ pub(crate) fn save_settings(s: &Settings) {
 
 /// Push settings that are read from global state (accent colour, download folder).
 pub(crate) fn apply_settings(s: &Settings) {
-    ACCENT_IDX.store(
-        s.accent.min(ACCENTS.len()),
-        std::sync::atomic::Ordering::Relaxed,
-    );
+    ACCENT_IDX.store(s.accent.min(ACCENTS.len()), std::sync::atomic::Ordering::Relaxed);
     let c = s.accent_custom;
-    ACCENT_CUSTOM.store(
-        ((c[0] as u32) << 16) | ((c[1] as u32) << 8) | c[2] as u32,
-        std::sync::atomic::Ordering::Relaxed,
-    );
-    download::set_dir(if s.download_dir.trim().is_empty() {
-        None
-    } else {
-        Some(s.download_dir.clone().into())
-    });
+    ACCENT_CUSTOM.store(((c[0] as u32) << 16) | ((c[1] as u32) << 8) | c[2] as u32, std::sync::atomic::Ordering::Relaxed);
+    download::set_dir(if s.download_dir.trim().is_empty() { None } else { Some(s.download_dir.clone().into()) });
 }

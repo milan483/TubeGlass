@@ -549,5 +549,18 @@
   "just now": "just now",
   "{count} min ago": "{count} min ago",
   "{count} h ago": "{count} h ago",
-  "{count} d ago": "{count} d ago"
+  "{count} d ago": "{count} d ago",
+  "Favorites": "Favorites",
+  "Seek to 0–90%": "Seek to 0–90%",
+  "Previous / next chapter": "Previous / next chapter",
+  "Repeat: Off / One / All": "Repeat: Off / One / All",
+  "Shuffle on / off": "Shuffle on / off",
+  "Queue on / off": "Queue on / off",
+  "Comments (transcript for podcasts)": "Comments (transcript for podcasts)",
+  "Dismiss overlay / exit fullscreen / back": "Dismiss overlay / exit fullscreen / back",
+  "Show shortcut help": "Show shortcut help",
+  "Focus search (select query)": "Focus search (select query)",
+  "Repeat off": "Repeat off",
+  "Shuffle on": "Shuffle on",
+  "Shuffle off": "Shuffle off"
 }

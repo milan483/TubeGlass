@@ -21,7 +21,7 @@ impl App {
                 .lists
                 .iter()
                 .find(|l| &l.id == id)
-                .map(|l| l.name.clone())
+                .map(playlist_label)
                 .unwrap_or_default(),
             Sel::Home => tr("Latest from your channels"),
             Sel::Search => trf("Results for “{query}”", &[("query", &self.search_query)]),
@@ -85,7 +85,8 @@ impl App {
                 }
                 text_field(
                     ui,
-                    &mut self.search_input, &tr("Search YouTube — videos and channels"),
+                    &mut self.search_input,
+                    &tr("Search YouTube — videos and channels"),
                     ui.available_width(),
                     46.0,
                     "search",
@@ -231,7 +232,7 @@ impl App {
                     _ => None,
                 };
                 if let Some(ts) = ts {
-                    ui.label(egui::RichText::new(trf("Updated {time}", &[("time", &ago(ts))])).size(13.0).color(muted()));
+                    ui.label(egui::RichText::new(trf("Updated {time}", &[("time", &localized_ago(ts))])).size(13.0).color(muted()));
                 }
             }
             // on a narrow window the buttons drop to their own line, and wrap if they still do not fit

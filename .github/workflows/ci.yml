@@ -21,6 +21,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
       - name: System libraries (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -37,6 +41,10 @@ jobs:
       - name: Test
         shell: bash
         run: cargo test --release --locked 2>&1 | tee test.log
+
+      - name: Test locale scaffolder
+        shell: bash
+        run: python scripts/test_new_locale.py
 
       # downloads the pinned ffmpeg for this system, checks its checksum, unpacks it and runs
       # it: proves the build list and binary work on a real Linux machine

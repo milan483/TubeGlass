@@ -179,11 +179,11 @@ impl App {
         if pressed(B) {
             self.settings.ambient = !self.settings.ambient;
             self.save_settings();
-            self.toast(if self.settings.ambient {
+            self.toast(tr(if self.settings.ambient {
                 "Ambient mode on"
             } else {
                 "Ambient mode off"
-            });
+            }));
         }
         if pressed(W) {
             if let Some(w) = self
@@ -196,11 +196,11 @@ impl App {
                     .lists
                     .iter()
                     .any(|l| l.id == "watchlater" && l.videos.iter().any(|x| x.id == w.id));
-                self.toast(if on {
+                self.toast(tr(if on {
                     "Added to Watch later"
                 } else {
                     "Removed from Watch later"
-                });
+                }));
             }
         }
         if pressed(Y) && self.watching.as_ref().is_some_and(|w| w.music) {
@@ -219,14 +219,14 @@ impl App {
             self.player.set_speed(v);
             self.settings.speed = v;
             self.save_settings();
-            self.toast(format!("Speed {v}×"));
+            self.toast(trf("Speed {speed}×", &[("speed", &v.to_string())]));
         }
         if pressed(CloseBracket) {
             let v = (self.player.speed + 0.25).min(2.0);
             self.player.set_speed(v);
             self.settings.speed = v;
             self.save_settings();
-            self.toast(format!("Speed {v}×"));
+            self.toast(trf("Speed {speed}×", &[("speed", &v.to_string())]));
         }
         if pressed(I) {
             let on = !self.mini;

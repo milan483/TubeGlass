@@ -27,7 +27,6 @@ pub(crate) fn ago(ts: u64) -> String {
     }
 }
 
-
 /// Localized relative age for app-authored UI labels.
 pub(crate) fn localized_ago(ts: u64) -> String {
     ago_at(ts, now_secs())

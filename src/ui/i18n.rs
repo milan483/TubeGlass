@@ -209,7 +209,31 @@ mod tests {
 
     #[test]
     fn unsupported_and_regional_languages_fall_back_safely() {
+        let lists = [
+            ("favorites", "Favorites"),
+            ("watchlater", "Watch later"),
+            ("liked", "Liked songs"),
+            ("pl-custom", "Watch later"),
+            ("favorites", "My favorites"),
+        ]
+        .map(|(id, name)| crate::LocalList {
+            id: id.into(),
+            name: name.into(),
+            videos: vec![],
+            offline: false,
+        });
+        let saved_lists = serde_json::to_string(&lists).unwrap();
         set_language("en");
+        assert_eq!(
+            lists.each_ref().map(playlist_label),
+            [
+                "Favorites",
+                "Watch later",
+                "Liked songs",
+                "Watch later",
+                "My favorites"
+            ]
+        );
         assert_eq!(trf("{count} items", &[("count", "2")]), "2 items");
         let escaped = ["{{", "count", "}}"].concat();
         assert_eq!(tr(&escaped), "{count}");
@@ -229,6 +253,22 @@ mod tests {
         }
         assert_eq!(crate::util::ago_at(now + 60, now), "just now");
         set_language("id-ID");
+        assert_eq!(
+            lists.each_ref().map(playlist_label),
+            [
+                "Favorit",
+                "Tonton nanti",
+                "Lagu yang disukai",
+                "Watch later",
+                "My favorites"
+            ]
+        );
+        assert_eq!(serde_json::to_string(&lists).unwrap(), saved_lists);
+        assert_eq!(
+            crate::util::ago(crate::util::now_secs()),
+            "just now",
+            "persisted podcast metadata keeps its original language"
+        );
         assert_eq!(tr("Settings"), "Pengaturan");
         assert_eq!(trf("{count} items", &[("count", "2")]), "2 item");
         for (seconds, expected) in boundaries.into_iter().zip([
@@ -253,6 +293,16 @@ mod tests {
         assert_eq!(tr("Settings"), "Settings");
         let uncatalogued = ["Uncatalogued", " text"].concat();
         assert_eq!(tr(&uncatalogued), uncatalogued);
+    }
+
+    #[test]
+    fn saved_language_is_backward_compatible() {
+        let mut settings: crate::Settings = serde_json::from_value(serde_json::json!({})).unwrap();
+        assert_eq!(settings.language, "system");
+        settings.language = "id".into();
+        let serialized = serde_json::to_string(&settings).unwrap();
+        let restored: crate::Settings = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(restored.language, "id");
     }
 
     #[test]
